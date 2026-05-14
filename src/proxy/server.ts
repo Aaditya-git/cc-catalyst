@@ -27,7 +27,10 @@ function passthroughRequest(
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === 'POST' && req.url === '/v1/messages') {
+    if (req.method === 'GET' && req.url === '/health') {
+      res.writeHead(200)
+      res.end('ok')
+    } else if (req.method === 'POST' && req.url === '/v1/messages') {
       await interceptRequest(req, res)
     } else {
       passthroughRequest(req, res)
