@@ -59,4 +59,19 @@ describe('buildPlan', () => {
     const plan = buildPlan(makeRequest('fix the bug in auth.ts'), profile)
     expect(plan.toolsToKeep).toContain('WebFetch')
   })
+
+  it('detects task type from first text message in multi-turn session', () => {
+    const request: AnthropicRequest = {
+      model: 'claude-opus-4-7',
+      max_tokens: 1024,
+      messages: [
+        { role: 'user', content: 'fix the bug in auth.ts' },
+        { role: 'assistant', content: [{ type: 'tool_use', id: 'tu_1', name: 'Read', input: { file_path: 'auth.ts' } }] },
+        { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'tu_1', content: 'file contents here' }] }
+      ]
+    }
+    const plan = buildPlan(request, emptyProfile)
+    expect(plan.taskType).toBe('file_editing')
+    expect(plan.toolsToKeep).toContain('Read')
+  })
 })

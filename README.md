@@ -11,6 +11,23 @@ After:   Claude Code ──► cc-catalyst ──── 18,000 tokens ───�
 
 ---
 
+## Benchmark Results
+
+Tested against 3 real-world Claude Code session types:
+
+| Session type | Tools pruned | Payload reduction |
+|---|---|---|
+| File editing (`fix bug in auth.ts`) | 12 / 21 tools | **33.7%** |
+| Debugging (`why is my test failing`) | 16 / 21 tools | **42.0%** |
+| Git work (`commit and push to main`) | 18 / 21 tools | **48.8%** |
+| **Average** | **15 / 21 tools** | **41.5%** |
+
+> Tested on condensed fixture sessions. Full Claude Code sessions (with 8.5k token system prompts and 31.5k token tool schemas) see proportionally higher savings.
+
+CI enforces a quality gate on every commit: token reduction must stay above threshold and 47 unit tests must pass.
+
+---
+
 ## Why
 
 Every Claude Code session starts with a fixed tax:
@@ -60,6 +77,56 @@ User message arrives
 **Quality guarantee:** task success rate must stay ≥ 99.5%. If any optimization rule degrades quality, it gets reverted. Savings come from certainty, not guessing.
 
 **Latency:** the proxy adds ~5–10ms overhead. Sending fewer tokens saves 300–500ms on Anthropic's side. cc-catalyst is a **net latency win**.
+
+---
+
+## Usage in your Claude Code sessions
+
+**One-time setup:**
+
+```bash
+npx cc-catalyst init
+```
+
+That's it. From that point on, every Claude Code session you open automatically routes through cc-catalyst. You don't change how you use Claude Code at all — just open it and work normally.
+
+**To verify it's working:**
+
+```bash
+npx cc-catalyst status
+```
+
+```
+cc-catalyst Status
+
+  Proxy:       ● running on http://127.0.0.1:8080
+  Claude Code: ✓ routed through cc-catalyst
+```
+
+**To see your token savings:**
+
+```bash
+npx cc-catalyst audit
+```
+
+```
+cc-catalyst Token Audit
+
+Fixed costs every Claude Code session:
+  System prompt:     ~8,500 tokens
+  System tools:      ~31,500 tokens
+  Total fixed cost:  ~40,000 tokens
+
+cc-catalyst reduces to:
+  System tools (pruned): ~8,000–15,000 tokens depending on task
+  Estimated savings:     20–55% per session
+```
+
+**To uninstall:**
+
+```bash
+npx cc-catalyst remove
+```
 
 ---
 

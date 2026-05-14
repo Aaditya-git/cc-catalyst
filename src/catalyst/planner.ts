@@ -48,11 +48,22 @@ function resolveToolSet(taskType: TaskType, profile: UserProfile): string[] {
 
 function extractLastUserMessage(request: AnthropicRequest): string {
   const userMsgs = request.messages.filter(m => m.role === 'user')
-  const last = userMsgs[userMsgs.length - 1]
-  if (!last) return ''
-  if (typeof last.content === 'string') return last.content
-  return last.content
-    .filter(b => b.type === 'text')
-    .map(b => (b as { type: 'text'; text: string }).text)
-    .join(' ')
+
+  // Walk backwards to find the last message with actual text content.
+  // Multi-turn sessions end with tool_result blocks, not text.
+  for (let i = userMsgs.length - 1; i >= 0; i--) {
+    const msg = userMsgs[i]
+    if (typeof msg.content === 'string' && msg.content.trim()) return msg.content
+
+    if (Array.isArray(msg.content)) {
+      const text = msg.content
+        .filter(b => b.type === 'text')
+        .map(b => (b as { type: 'text'; text: string }).text)
+        .join(' ')
+        .trim()
+      if (text) return text
+    }
+  }
+
+  return ''
 }

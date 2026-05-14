@@ -4,6 +4,9 @@ export interface BenchmarkResult {
   optimizedBytes: number
   reductionPercent: number
   taskType: string
+  toolsPruned: number
+  originalToolCount: number
+  realWorldReductionEstimate: number
 }
 
 export interface BenchmarkSummary {
@@ -14,7 +17,7 @@ export interface BenchmarkSummary {
   passedQualityGate: boolean
 }
 
-export function computeSummary(results: BenchmarkResult[]): BenchmarkSummary {
+export function computeSummary(results: BenchmarkResult[], gate = 20): BenchmarkSummary {
   if (results.length === 0) {
     return {
       totalSessions: 0,
@@ -33,6 +36,6 @@ export function computeSummary(results: BenchmarkResult[]): BenchmarkSummary {
     avgReductionPercent: Math.round(avg * 10) / 10,
     minReductionPercent: Math.min(...reductions),
     maxReductionPercent: Math.max(...reductions),
-    passedQualityGate: avg >= 20
+    passedQualityGate: avg >= gate
   }
 }
