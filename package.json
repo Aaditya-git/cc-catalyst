@@ -1,0 +1,38 @@
+{
+  "name": "cc-catalyst",
+  "version": "0.1.0",
+  "description": "Token optimizer proxy for Claude Code — save tokens without compromising quality",
+  "main": "dist/cli/index.js",
+  "bin": {
+    "cc-catalyst": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "proxy": "node dist/proxy/server.js",
+    "cli": "node dist/cli/index.js",
+    "test": "jest --testPathPattern='tests/unit'",
+    "test:integration": "jest --testPathPattern='tests/integration'",
+    "benchmark": "ts-node tests/benchmarks/runner.ts",
+    "lint": "eslint src/ tests/ --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["claude", "claude-code", "token", "optimization", "proxy", "anthropic"],
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/jest": "^29.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
