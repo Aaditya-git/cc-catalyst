@@ -3,6 +3,7 @@ import https from 'https'
 import { createOptimizer } from '../catalyst/optimizer'
 import { createProfile } from '../adaptive/profile'
 import { AnthropicRequest, UserProfile } from '../types'
+import { captureAndForward } from '../metrics/responseReader'
 
 const profile = createProfile()
 const optimizer = createOptimizer(() => profile.load())
@@ -20,9 +21,11 @@ export async function interceptRequest(
   res: http.ServerResponse
 ): Promise<void> {
   const rawBody = await bufferBody(req)
+  const estimatedOriginal = Math.round(rawBody.length / 4)
+
   const parsed: AnthropicRequest = JSON.parse(rawBody.toString())
   const optimized = optimizer.optimize(parsed)
-  await forwardToAnthropic(optimized, req.headers, res)
+  await forwardToAnthropic(optimized, req.headers, res, estimatedOriginal)
 }
 
 function bufferBody(req: http.IncomingMessage): Promise<Buffer> {
@@ -37,7 +40,8 @@ function bufferBody(req: http.IncomingMessage): Promise<Buffer> {
 async function forwardToAnthropic(
   body: AnthropicRequest,
   originalHeaders: http.IncomingMessage['headers'],
-  res: http.ServerResponse
+  res: http.ServerResponse,
+  estimatedOriginal: number
 ): Promise<void> {
   const payload = JSON.stringify(body)
   const upstream = process.env.CC_CATALYST_UPSTREAM ?? 'https://api.anthropic.com'
@@ -61,8 +65,7 @@ async function forwardToAnthropic(
 
   return new Promise((resolve, reject) => {
     const proxyReq = transport.request(options, proxyRes => {
-      res.writeHead(proxyRes.statusCode!, proxyRes.headers)
-      proxyRes.pipe(res)
+      captureAndForward(proxyRes, res, body.model, estimatedOriginal)
       proxyRes.on('end', resolve)
     })
     proxyReq.on('error', reject)
