@@ -6,23 +6,26 @@
   "bin": {
     "cc-catalyst": "dist/cli/index.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && chmod +x dist/cli/index.js",
     "build:watch": "tsc --watch",
     "proxy": "node dist/proxy/server.js",
     "cli": "node dist/cli/index.js",
+    "prepublishOnly": "npm test && npm run build",
     "test": "jest --testPathPattern='tests/unit'",
     "test:integration": "jest --testPathPattern='tests/integration'",
     "benchmark": "ts-node tests/benchmarks/runner.ts",
-    "lint": "eslint src/ tests/ --ext .ts",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["claude", "claude-code", "token", "optimization", "proxy", "anthropic"],
+  "keywords": ["claude", "claude-code", "token", "optimization", "proxy", "anthropic", "llm"],
   "license": "MIT",
   "dependencies": {
     "commander": "^12.0.0",
-    "chalk": "^5.3.0",
-    "node-fetch": "^3.3.2"
+    "chalk": "^5.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
