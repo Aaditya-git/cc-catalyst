@@ -34,5 +34,5 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Benchmark (quality gate)
-        run: npm run benchmark
+      - name: Integration tests
+        run: npm run test:integration -- --no-coverage
