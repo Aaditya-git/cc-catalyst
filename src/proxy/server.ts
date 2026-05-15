@@ -57,16 +57,18 @@ app.post('/v1/messages', (req, res) => {
 
 // Passthrough for all other routes
 app.all('*', (req, res) => {
-  forward(req, res, req.body ?? {})
+  forward(req, res, req.body)
 })
 
 function forward(req: express.Request, res: express.Response, body: unknown) {
-  const bodyStr = JSON.stringify(body)
+  const bodyStr = body !== undefined ? JSON.stringify(body) : ''
   const headers: Record<string, string> = {}
 
   for (const [key, value] of Object.entries(req.headers)) {
     if (['host', 'content-length', 'connection', 'transfer-encoding'].includes(key)) continue
-    if (typeof value === 'string') headers[key] = value
+    if (value !== undefined) {
+      headers[key] = Array.isArray(value) ? value.join(', ') : value
+    }
   }
 
   headers['host'] = 'api.anthropic.com'
@@ -94,7 +96,7 @@ function forward(req: express.Request, res: express.Response, body: unknown) {
     if (!res.headersSent) res.status(502).json({ error: 'proxy_error', message: err.message })
   })
 
-  proxyReq.write(bodyStr)
+  if (bodyStr) proxyReq.write(bodyStr)
   proxyReq.end()
 }
 
