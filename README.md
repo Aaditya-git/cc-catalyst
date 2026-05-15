@@ -190,7 +190,34 @@ Create `~/.cc-catalyst/config.json` to override defaults:
 npx cc-catalyst remove
 ```
 
-Removes hooks, slash commands, and the CLAUDE.md block. Stop the proxy first with `npx cc-catalyst proxy stop`.
+or just:
+
+```bash
+npm uninstall -g cc-catalyst
+```
+
+Both paths do a full cleanup:
+
+- Stops the proxy (kills by PID, falls back to port scan if PID file is missing)
+- Removes hooks, slash commands, and the CLAUDE.md activation block
+- Removes `ANTHROPIC_BASE_URL` from `~/.zshrc`, `~/.bashrc`, `~/.bash_profile`
+- Clears stale cc-catalyst entries from the npx cache (`~/.npm/_npx/`)
+
+Then run this in your current terminal to drop the env var from the active session:
+
+```bash
+unset ANTHROPIC_BASE_URL
+```
+
+### Why the npx cache matters
+
+When you run `npx cc-catalyst <command>` without `@latest`, npx uses a cached copy of the package. If you uninstall without clearing the cache, old versions of cc-catalyst persist in `~/.npm/_npx/` and will be used on the next `npx` invocation.
+
+`cc-catalyst remove` clears these automatically. To inspect the cache manually:
+
+```bash
+grep -rl "cc-catalyst" ~/.npm/_npx/*/package.json 2>/dev/null
+```
 
 ---
 
