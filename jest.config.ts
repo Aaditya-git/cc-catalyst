@@ -5,7 +5,8 @@ const config: Config = {
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1'
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^chalk$': '<rootDir>/tests/__mocks__/chalk.ts'
   },
   coverageDirectory: 'coverage',
   collectCoverageFrom: ['src/**/*.ts']
