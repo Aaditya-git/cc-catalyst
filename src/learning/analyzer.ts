@@ -2,7 +2,7 @@ import type { ToolCallLog } from '../types'
 
 export function analyzePatterns(
   logs: ToolCallLog[],
-  minSessions = 3
+  minSessions = 2
 ): { neverUsed: string[]; alwaysUsed: string[]; sessionCount: number } {
   const sessions = new Set(logs.map(l => l.sessionId))
   const sessionCount = sessions.size
