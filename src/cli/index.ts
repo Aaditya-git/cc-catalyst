@@ -5,6 +5,7 @@ import { removeCommand } from './commands/remove'
 import { auditCommand } from './commands/audit'
 import { statusCommand } from './commands/status'
 import { learnCommand } from './commands/learn'
+import { proxyCommand } from './commands/proxy'
 
 const program = new Command()
 
@@ -18,5 +19,6 @@ program.addCommand(removeCommand)
 program.addCommand(auditCommand)
 program.addCommand(statusCommand)
 program.addCommand(learnCommand)
+program.addCommand(proxyCommand)
 
 program.parse()
