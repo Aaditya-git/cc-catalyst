@@ -39,3 +39,10 @@ export interface HookInput {
   tool_response?: unknown
   stop_hook_active?: boolean
 }
+
+export interface ProxyConfig {
+  port: number
+  historyTrimN: number
+  enableToolStripping: boolean
+  enableHistoryTrimming: boolean
+}
