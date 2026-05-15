@@ -1,36 +1,61 @@
 import { Command } from 'commander'
-import fs from 'fs'
 import path from 'path'
-import os from 'os'
 import chalk from 'chalk'
+import { analyzeGlobalClaudeMd, analyzeProjectClaudeMd, analyzeMcpDescriptions, analyzeSessionHistory } from '../../analytics/file-analyzer'
+import { buildBreakdown } from '../../analytics/breakdown'
+
+function projectHash(dir: string): string {
+  return dir.replace(/\//g, '-')
+}
+
+function bar(tokens: number, total: number, width = 20): string {
+  const filled = total > 0 ? Math.round((tokens / total) * width) : 0
+  return '█'.repeat(filled) + '░'.repeat(width - filled)
+}
+
+function pct(tokens: number, total: number): string {
+  return total > 0 ? `${Math.round((tokens / total) * 100)}%` : '0%'
+}
 
 export const auditCommand = new Command('audit')
-  .description('Show token usage breakdown and savings estimate')
+  .description('Show a token cost breakdown for the current project')
   .action(() => {
-    const profilePath = path.join(os.homedir(), '.cc-catalyst', 'profile.json')
-    const profile = fs.existsSync(profilePath)
-      ? JSON.parse(fs.readFileSync(profilePath, 'utf-8'))
-      : { toolUsageByTaskType: {} }
+    const cwd = process.cwd()
+    const hash = projectHash(cwd)
 
-    console.log(chalk.bold('\ncc-catalyst Token Audit\n'))
-    console.log(chalk.gray('Fixed costs every Claude Code session:'))
-    console.log(`  System prompt:     ${chalk.yellow('~8,500 tokens')}`)
-    console.log(`  System tools:      ${chalk.red('~31,500 tokens')}`)
-    console.log(`  Total fixed cost:  ${chalk.red('~40,000 tokens')}`)
-    console.log()
-    console.log(chalk.gray('cc-catalyst reduces to:'))
-    console.log(`  System tools (pruned): ${chalk.green('~8,000–15,000 tokens')} depending on task`)
-    console.log(`  Estimated savings:     ${chalk.green('20–55% per session')}`)
-    console.log()
-
-    const taskTypes = Object.keys(profile.toolUsageByTaskType)
-    if (taskTypes.length > 0) {
-      console.log(chalk.gray('Your learned tool profiles:'))
-      for (const [type, tools] of Object.entries(profile.toolUsageByTaskType)) {
-        console.log(`  ${type}: ${(tools as string[]).join(', ')}`)
-      }
-    } else {
-      console.log(chalk.gray('No session data yet. Run a Claude Code session to start learning.'))
+    const parts = {
+      globalClaudeMd: analyzeGlobalClaudeMd(),
+      projectClaudeMd: analyzeProjectClaudeMd(cwd),
+      sessionHistory: analyzeSessionHistory(hash),
+      mcpDescriptions: analyzeMcpDescriptions(),
     }
-    console.log()
+
+    const result = buildBreakdown(parts)
+
+    console.log(chalk.bold('\nToken Cost Breakdown — ' + path.basename(cwd)))
+    console.log('─'.repeat(60))
+
+    const rows: [string, number][] = [
+      ['Global CLAUDE.md', result.globalClaudeMd],
+      ['Project CLAUDE.md', result.projectClaudeMd],
+      ['Session history (cumulative)', result.sessionHistory],
+      ['MCP tool descriptions (est.)', result.mcpDescriptions],
+    ]
+
+    for (const [label, tokens] of rows) {
+      const b = bar(tokens, result.total)
+      const p = pct(tokens, result.total)
+      console.log(`${label.padEnd(32)} ${String(tokens.toLocaleString()).padStart(7)} tokens  ${b}  ${p}`)
+    }
+
+    console.log('─'.repeat(60))
+    console.log(`${'Total'.padEnd(32)} ${String(result.total.toLocaleString()).padStart(7)} tokens\n`)
+
+    if (result.recommendations.length > 0) {
+      console.log(chalk.yellow('Recommendations:'))
+      result.recommendations.forEach((r, i) => console.log(`  ${i + 1}. ${r}`))
+      console.log()
+    } else {
+      console.log(chalk.green('✓ Token usage looks healthy.\n'))
+    }
   })
