@@ -32,7 +32,7 @@ cc-catalyst fixes this.
 |---|---|
 | **Proxy** | Sits between Claude Code and Anthropic. Strips unused tool schemas. Trims old history. Real tokens removed from the wire. |
 | **Session Health** | Warns Claude at 70% and 85% budget — inside its own context, not just the UI. |
-| **Adaptive Learning** | Logs every tool call per project. After 3+ sessions, knows which tools you never use. |
+| **Adaptive Learning** | Logs every tool call per project. After 2+ sessions, knows which tools you never use. |
 | **Token Analytics** | Shows exactly where tokens go — session history, CLAUDE.md, MCP descriptions. |
 
 ---
