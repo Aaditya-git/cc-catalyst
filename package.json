@@ -1,6 +1,6 @@
 {
   "name": "cc-catalyst",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Session intelligence for Claude Code — active token management via skills and hooks",
   "main": "dist/cli/index.js",
   "bin": {
