@@ -97,7 +97,6 @@ Session Health:
   Model:   claude-sonnet-4-6
   Updated: 5/15/2026, 7:01 AM
 
-Learned Patterns: no data yet (needs 3+ sessions)
 ```
 
 ---
