@@ -53,9 +53,14 @@ proxyCommand
     fs.writeFileSync(PID_FILE, String(child.pid))
 
     console.log(chalk.green(`\nProxy started on port ${PORT} (PID ${child.pid})`))
-    console.log(chalk.bold('\nOne-time setup — add to your shell profile (~/.zshrc or ~/.bashrc):'))
-    console.log(chalk.cyan(`\n  export ANTHROPIC_BASE_URL=http://localhost:${PORT}\n`))
-    console.log(chalk.dim('Then restart your terminal and Claude Code.'))
+
+    const currentBase = process.env.ANTHROPIC_BASE_URL
+    if (currentBase !== `http://localhost:${PORT}`) {
+      console.log(chalk.bold('\nOne-time setup — add to your shell profile (~/.zshrc or ~/.bashrc):'))
+      console.log(chalk.cyan(`\n  export ANTHROPIC_BASE_URL=http://localhost:${PORT}\n`))
+      console.log(chalk.dim('Then restart your terminal and Claude Code.'))
+    }
+
     console.log(chalk.dim(`Logs: ${LOG_FILE}`))
   })
 
