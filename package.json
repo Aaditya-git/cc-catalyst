@@ -1,6 +1,6 @@
 {
   "name": "cc-catalyst",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Session intelligence for Claude Code — active token management via skills and hooks",
   "main": "dist/cli/index.js",
   "bin": {
@@ -11,7 +11,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc && chmod +x dist/cli/index.js",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc && chmod +x dist/cli/index.js",
     "build:watch": "tsc --watch",
     "cli": "node dist/cli/index.js",
     "prepublishOnly": "npm test && npm run build",
