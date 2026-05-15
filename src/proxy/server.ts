@@ -56,7 +56,7 @@ app.post('/v1/messages', (req, res) => {
 })
 
 // Passthrough for all other routes
-app.all('*', (req, res) => {
+app.all(/.*/, (req, res) => {
   forward(req, res, req.body)
 })
 
