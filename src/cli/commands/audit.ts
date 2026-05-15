@@ -4,10 +4,6 @@ import chalk from 'chalk'
 import { analyzeGlobalClaudeMd, analyzeProjectClaudeMd, analyzeMcpDescriptions, analyzeSessionHistory } from '../../analytics/file-analyzer'
 import { buildBreakdown } from '../../analytics/breakdown'
 
-function projectHash(dir: string): string {
-  return dir.replace(/\//g, '-')
-}
-
 function bar(tokens: number, total: number, width = 20): string {
   const filled = total > 0 ? Math.round((tokens / total) * width) : 0
   return '█'.repeat(filled) + '░'.repeat(width - filled)
@@ -21,12 +17,11 @@ export const auditCommand = new Command('audit')
   .description('Show a token cost breakdown for the current project')
   .action(() => {
     const cwd = process.cwd()
-    const hash = projectHash(cwd)
 
     const parts = {
       globalClaudeMd: analyzeGlobalClaudeMd(),
       projectClaudeMd: analyzeProjectClaudeMd(cwd),
-      sessionHistory: analyzeSessionHistory(hash),
+      sessionHistory: analyzeSessionHistory(),
       mcpDescriptions: analyzeMcpDescriptions(),
     }
 
@@ -38,7 +33,7 @@ export const auditCommand = new Command('audit')
     const rows: [string, number][] = [
       ['Global CLAUDE.md', result.globalClaudeMd],
       ['Project CLAUDE.md', result.projectClaudeMd],
-      ['Session history (cumulative)', result.sessionHistory],
+      ['Current session input tokens', result.sessionHistory],
       ['MCP tool descriptions (est.)', result.mcpDescriptions],
     ]
 

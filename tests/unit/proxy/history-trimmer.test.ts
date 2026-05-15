@@ -50,4 +50,18 @@ describe('trimHistory', () => {
     expect(result.body).toBe(body)
     expect(result.removed).toBe(0)
   })
+
+  it('does not trim when trimmed window has no user messages', () => {
+    const body = {
+      messages: [
+        { role: 'user', content: 'start' },
+        { role: 'assistant', content: 'a1' },
+        { role: 'assistant', content: 'a2' },
+      ],
+    }
+    // trim to 2: slice(-2) = [assistant a1, assistant a2] — no user found, should not trim
+    const result = trimHistory(body, 2)
+    expect(result.removed).toBe(0)
+    expect((result.body as typeof body).messages).toHaveLength(3)
+  })
 })

@@ -27,21 +27,13 @@ export function analyzeMcpDescriptions(): number {
   return estimateTokens(JSON.stringify(mcp))
 }
 
-export function analyzeSessionHistory(projectHash: string): number {
-  const projectsDir = path.join(os.homedir(), '.claude', 'projects', projectHash)
-  if (!fs.existsSync(projectsDir)) return 0
-  let totalInputTokens = 0
-  const files = fs.readdirSync(projectsDir).filter(f => f.endsWith('.jsonl'))
-  for (const file of files) {
-    const lines = fs.readFileSync(path.join(projectsDir, file), 'utf8').trim().split('\n').filter(Boolean)
-    for (const line of lines) {
-      try {
-        const obj = JSON.parse(line) as { message?: { role?: string; usage?: Record<string, number> } }
-        const u = obj?.message?.usage
-        if (!u || obj?.message?.role !== 'assistant') continue
-        totalInputTokens += (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0)
-      } catch { /* skip */ }
-    }
+export function analyzeSessionHistory(): number {
+  const healthPath = path.join(os.homedir(), '.cc-catalyst', 'session-health.json')
+  if (fs.existsSync(healthPath)) {
+    try {
+      const h = JSON.parse(fs.readFileSync(healthPath, 'utf8')) as { inputTokens?: number }
+      if (typeof h.inputTokens === 'number') return h.inputTokens
+    } catch { /* fall through */ }
   }
-  return totalInputTokens
+  return 0
 }
