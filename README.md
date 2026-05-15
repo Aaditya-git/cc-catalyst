@@ -1,4 +1,4 @@
-# cc-catalyst 🧠
+# cc-catalyst 
 
 **Session intelligence for Claude Code — makes Claude work smarter, not just quieter.**
 
