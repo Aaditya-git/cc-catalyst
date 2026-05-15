@@ -1,132 +1,41 @@
-# cc-catalyst
+# cc-catalyst 🧠
 
-> Save 20–55% of tokens on every Claude Code session — without compromising quality.
+**Session intelligence for Claude Code — makes Claude work smarter, not just quieter.**
 
-cc-catalyst is a local proxy that sits between Claude Code and the Anthropic API. It intercepts every request, runs it through a **Catalyst optimizer** (inspired by Apache Spark's query optimizer), strips what isn't needed, and forwards a leaner request. Claude Code never knows anything changed.
+> Caveman makes Claude talk less. cc-catalyst makes Claude **work smarter**.
 
-```
-Before:  Claude Code ──── 40,000 tokens ────► api.anthropic.com
-After:   Claude Code ──► cc-catalyst ──── 18,000 tokens ────► api.anthropic.com
-```
-
----
-
-## Benchmark Results
-
-Tested against 3 real-world Claude Code session types:
-
-| Session type | Tools pruned | Payload reduction |
-|---|---|---|
-| File editing (`fix bug in auth.ts`) | 12 / 21 tools | **33.7%** |
-| Debugging (`why is my test failing`) | 16 / 21 tools | **42.0%** |
-| Git work (`commit and push to main`) | 18 / 21 tools | **48.8%** |
-| **Average** | **15 / 21 tools** | **41.5%** |
-
-> Tested on condensed fixture sessions. Full Claude Code sessions (with 8.5k token system prompts and 31.5k token tool schemas) see proportionally higher savings.
-
-CI enforces a quality gate on every commit: token reduction must stay above threshold and 47 unit tests must pass.
-
----
-
-## Why
-
-Every Claude Code session starts with a fixed tax:
-
-| Category | Tokens |
-|----------|--------|
-| System prompt | ~8,500 |
-| System tool schemas | ~31,500 |
-| **Total before you type a word** | **~40,000** |
-
-On top of that, every tool result (bash output, file reads, web fetches) accumulates in context and gets re-sent every turn. By turn 20, you can be carrying 30,000+ tokens of stale output.
-
-cc-catalyst eliminates both problems.
-
----
-
-## How it works
-
-```
-User message arrives
-        │
-        ▼
-┌───────────────────────┐
-│   Catalyst Planner    │  detects task type from message
-│   "fix bug in auth.ts"│  → task_type: file_editing
-└──────────┬────────────┘
-           │
-           ▼
-┌───────────────────────┐
-│  Optimization Rules   │
-│  • Tool pruner        │  strips 26 unused tool schemas  → saves ~22k tokens
-│  • Prompt compressor  │  removes duplicate lines        → saves ~1–2k tokens
-│  • Output truncator   │  caps long bash/read outputs    → saves variable
-│  • History compactor  │  summarizes old turns           → saves variable
-└──────────┬────────────┘
-           │
-           ▼
-┌───────────────────────┐
-│  Adaptive Engine      │  learns which tools your tasks actually need
-│                       │  gets smarter every session
-└──────────┬────────────┘
-           │
-           ▼
-     Optimized request → api.anthropic.com
-```
-
-**Quality guarantee:** task success rate must stay ≥ 99.5%. If any optimization rule degrades quality, it gets reverted. Savings come from certainty, not guessing.
-
-**Latency:** the proxy adds ~5–10ms overhead. Sending fewer tokens saves 300–500ms on Anthropic's side. cc-catalyst is a **net latency win**.
-
----
-
-## Usage in your Claude Code sessions
-
-**One-time setup:**
+Install in one command. No proxy. No daemon. No shell profile changes.
 
 ```bash
 npx cc-catalyst init
 ```
 
-That's it. From that point on, every Claude Code session you open automatically routes through cc-catalyst. You don't change how you use Claude Code at all — just open it and work normally.
+---
 
-**To verify it's working:**
+## What it does
 
-```bash
-npx cc-catalyst status
-```
+Claude Code burns tokens on things it never needed to see: bloated CLAUDE.md files, session history that compounds across turns, and tool descriptions loaded wholesale. cc-catalyst fixes this through four active systems:
 
-```
-cc-catalyst Status
+| Feature | What it does |
+|---|---|
+| **Session Health** | Monitors your token budget after every response. Warns you before you hit the wall. |
+| **Token Analytics** | Breaks down exactly where tokens go — CLAUDE.md, history, MCP, tool outputs. Ranked recommendations. |
+| **Adaptive Learning** | Learns which tools you actually use per project. Suppresses the ones you never touch. |
+| **Context Planner** | Detects task type (coding / debugging / docs) and loads only the context you need. |
 
-  Proxy:       ● running on http://127.0.0.1:8080
-  Claude Code: ✓ routed through cc-catalyst
-```
+---
 
-**To see your token savings:**
+## vs. Caveman
 
-```bash
-npx cc-catalyst audit
-```
+| | [Caveman](https://github.com/juliusbrussee/caveman) | cc-catalyst |
+|---|---|---|
+| **Target** | Output tokens (responses) | Input tokens (context, history) |
+| **Approach** | Makes Claude talk less | Makes Claude work smarter |
+| **Session-aware** | No | Yes — tracks budget, learns patterns |
+| **Analytics** | Total count | Breakdown by source + recommendations |
+| **Adaptive** | Static | Learns your project over time |
 
-```
-cc-catalyst Token Audit
-
-Fixed costs every Claude Code session:
-  System prompt:     ~8,500 tokens
-  System tools:      ~31,500 tokens
-  Total fixed cost:  ~40,000 tokens
-
-cc-catalyst reduces to:
-  System tools (pruned): ~8,000–15,000 tokens depending on task
-  Estimated savings:     20–55% per session
-```
-
-**To uninstall:**
-
-```bash
-npx cc-catalyst remove
-```
+**Use both.** They're complementary: caveman shrinks what Claude *says*, cc-catalyst shrinks what Claude *sees*.
 
 ---
 
@@ -136,120 +45,61 @@ npx cc-catalyst remove
 npx cc-catalyst init
 ```
 
-That's it. The command:
-1. Detects your Claude Code installation
-2. Sets `ANTHROPIC_BASE_URL=http://127.0.0.1:8080` in `~/.claude/settings.json`
-3. Starts the proxy daemon in the background
+Done. Restart Claude Code. That's it.
 
-To verify it's running:
+What `init` does:
+- Adds `/catalyst-audit`, `/catalyst-compress`, `/catalyst-status`, `/catalyst-learn` slash commands
+- Adds an activation block to `~/.claude/CLAUDE.md`
+- Adds `Stop` and `PostToolUse` hooks to `~/.claude/settings.json` (safe, atomic, idempotent)
+- Copies hook scripts to `~/.cc-catalyst/hooks/`
+
+No proxy. No env vars. No network config.
+
+---
+
+## Usage
+
+**Inside Claude Code:**
+
+| Command | What it does |
+|---|---|
+| `/catalyst-status` | Show token budget and learned patterns |
+| `/catalyst-audit` | Deep token breakdown for this project |
+| `/catalyst-compress` | Rewrite CLAUDE.md files to cut input tokens forever |
+| `/catalyst-learn` | Show or manage learned tool patterns |
+
+**In terminal:**
 
 ```bash
-npx cc-catalyst status
+npx cc-catalyst audit          # token breakdown
+npx cc-catalyst status         # health + learned patterns
+npx cc-catalyst learn show     # what has been learned
+npx cc-catalyst learn reset    # clear learned data
+npx cc-catalyst learn forget Read   # un-suppress a tool
+npx cc-catalyst remove         # clean uninstall
 ```
 
-To uninstall:
+---
+
+## How it works
+
+1. **Stop hook** runs after every Claude response → reads your session JSONL, computes token budget, writes `~/.cc-catalyst/session-health.json`
+2. **PostToolUse hook** runs after every tool call → logs tool name to `~/.cc-catalyst/sessions/`
+3. **Activation block** in `~/.claude/CLAUDE.md` → Claude checks health file on session start, applies learned patterns
+4. **Slash commands** in `~/.claude/commands/` → on-demand audit, compress, and learning management
+
+Session data lives in `~/.cc-catalyst/`. All local, no cloud, no telemetry.
+
+---
+
+## Uninstall
 
 ```bash
 npx cc-catalyst remove
 ```
 
----
-
-## Commands
-
-```bash
-cc-catalyst init     # install and start proxy
-cc-catalyst status   # show proxy status and routing
-cc-catalyst audit    # token breakdown + savings estimate
-cc-catalyst remove   # clean uninstall
-```
+Removes all hooks, slash commands, and the CLAUDE.md block. Your other settings are untouched.
 
 ---
 
-## Architecture
-
-```
-src/
-├── proxy/
-│   ├── server.ts         HTTP server on localhost:8080
-│   └── interceptor.ts    buffers request → optimizer → forwards + streams
-├── catalyst/
-│   ├── planner.ts        detects task type from user message
-│   ├── optimizer.ts      orchestrates all rules
-│   └── rules/
-│       ├── tool-pruner.ts        strips unneeded tool schemas
-│       ├── output-truncator.ts   caps long tool outputs
-│       ├── history-compactor.ts  summarizes old message turns
-│       └── prompt-compressor.ts  removes redundant system prompt content
-├── adaptive/
-│   ├── tracker.ts        records which tools Claude actually calls
-│   └── profile.ts        persists per-user tool profile to ~/.cc-catalyst/
-└── cli/
-    ├── index.ts
-    └── commands/         init, remove, audit, status
-```
-
-### Catalyst optimizer (the Spark analogy)
-
-Just like Apache Spark builds a logical plan, applies optimization rules, and produces a physical plan before executing — cc-catalyst:
-
-1. **Logical plan:** parse the user's intent from the message
-2. **Optimization rules:** prune tools, compress prompt, compact history, truncate outputs
-3. **Physical plan:** the minimal context set needed for this specific task
-4. **Execute:** forward to Anthropic
-
-### Adaptive engine
-
-After each session, the tracker records which tools were actually called. Over time, the optimizer learns your real usage patterns and produces better-targeted tool sets. A "file editing" session that consistently uses `WebFetch` will see it added to that task's tool set automatically.
-
----
-
-## Development
-
-```bash
-npm install
-npm run build          # compile TypeScript
-npm test               # unit tests (46 tests)
-npm run benchmark      # run golden session dataset
-npx tsc --noEmit       # typecheck
-```
-
-### Running locally
-
-```bash
-node dist/proxy/server.js       # start proxy manually
-node dist/cli/index.js audit    # run audit CLI
-```
-
-### Adding benchmark sessions
-
-Drop anonymized Claude Code API request fixtures (JSON) into `tests/benchmarks/sessions/`. The benchmark runner measures token reduction % against each session and enforces a ≥ 20% average reduction gate.
-
----
-
-## Quality gates
-
-Every PR must pass:
-
-| Metric | Threshold |
-|--------|-----------|
-| Unit tests | 100% pass |
-| TypeScript errors | 0 |
-| Token reduction (benchmarks) | ≥ 20% average |
-| Proxy latency overhead | < 50ms p99 |
-
----
-
-## Roadmap
-
-- [ ] Session dashboard with live token savings counter
-- [ ] Per-project MCP server pruning
-- [ ] Streaming response inspection for adaptive tool tracking
-- [ ] npm publish as `cc-catalyst`
-- [ ] CI with GitHub Actions
-
----
-
-## License
-
-MIT
+MIT License
