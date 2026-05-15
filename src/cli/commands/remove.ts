@@ -22,6 +22,19 @@ function isRunning(pid: number): boolean {
   try { process.kill(pid, 0); return true } catch { return false }
 }
 
+function clearNpxCache(): void {
+  const npxCacheDir = path.join(os.homedir(), '.npm', '_npx')
+  if (!fs.existsSync(npxCacheDir)) return
+  for (const entry of fs.readdirSync(npxCacheDir)) {
+    const pkgJson = path.join(npxCacheDir, entry, 'package.json')
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgJson, 'utf8'))
+      const deps = { ...pkg.dependencies, ...pkg.devDependencies }
+      if ('cc-catalyst' in deps) fs.rmSync(path.join(npxCacheDir, entry), { recursive: true })
+    } catch { /* not a valid package dir */ }
+  }
+}
+
 function killByPort(port: number): boolean {
   try {
     const pid = execFileSync('lsof', ['-ti', `:${port}`], { encoding: 'utf8' }).trim()
@@ -89,6 +102,10 @@ export const removeCommand = new Command('remove')
     }
     if (!proxyKilled) proxyKilled = killByPort(PROXY_PORT)
     if (proxyKilled) console.log(chalk.green('✓ Proxy stopped'))
+
+    // Clear stale npx cache entries
+    clearNpxCache()
+    console.log(chalk.green('✓ npx cache cleared'))
 
     // Remove ANTHROPIC_BASE_URL from shell profiles
     let removedFromProfile = false
